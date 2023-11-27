@@ -14,4 +14,9 @@ export class product {
     @Column()
     price: number
 
+    constructor(prod:Partial<product>){
+        Object.assign(this,prod);
+    }
+
+
 }

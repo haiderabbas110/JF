@@ -1,5 +1,5 @@
 export class ProductDto {
-    id?: string;
+    id?: number;
     title: string;
     desc: string;
     price: number

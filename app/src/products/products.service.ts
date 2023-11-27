@@ -1,64 +1,43 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Product } from './products.model';
 import { ProductDto } from './dto/product.dto';
-import { InjectRepository } from '@nestjs/typeorm';
 import { product } from './typeorm/entities/Product';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class ProductsService {
-    constructor(@InjectRepository(product) private productRepository: Repository<product>){
+    constructor(
+        @InjectRepository(product)
+        private readonly productRepository: Repository<product>,
+        private readonly entityManger: EntityManager) {
 
 
     }
-    products: Product[] = []
 
-    insertProduct(createProductsDTO: ProductDto) {
-        const {title, desc, price} = createProductsDTO
-        const prodID = Math.random().toString();
-        const newProduct = new Product(prodID, title, desc, price);
-        this.products.push(newProduct);
-        return newProduct;
+    async insertProduct(createProductsDTO: ProductDto) {
+        const item = new product(createProductsDTO);
+        await this.entityManger.save(item);
     }
 
-    getProducts() {
-        return [...this.products]
+    async getProducts() {
+        return this.productRepository.find();
+
     }
 
-    getProductByID(prodID: string) {
-        const product = this.products.find((prod) => prod.id === prodID)
-        if (!product) {
-            throw new NotFoundException("Not found data ok");
-        }
-        return { ...product }
+    async getProductByID(id: number) {
+        const product = this.productRepository.findOneBy({ id })
+        return product
     }
 
-    updateProduct(createProductsDTO: ProductDto) {
-        const { id, title, desc, price } = createProductsDTO;
-        const productIndex = this.products.findIndex((prod) => prod.id === id)
-        const product = this.products[productIndex];
-        if (!product) {
-            throw new NotFoundException("Could not find product.");
-        }
+    async updateProduct(id: number, prod: Partial<product>): Promise<product> {
+        await this.productRepository.update(id, prod);
+        return this.productRepository.findOne({ where: { id } });
 
-        const updateProduct = { ...product }
+    }
 
-        if (title) {
-            updateProduct.title = title;
-        }
-
-        if (desc) {
-            updateProduct.description = desc;
-        }
-
-        if (price) {
-            updateProduct.price = price;
-        }
-
-
-        this.products[productIndex] = updateProduct;
-
-
+    async deleteProduct(id: number) {
+        await this.productRepository.delete(id);
     }
 
 }

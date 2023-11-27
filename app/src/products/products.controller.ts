@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param, Patch } from "@nestjs/common";
+import { Controller, Post, Body, Get, Param, Patch, Delete, NotFoundException } from "@nestjs/common";
 import { ProductsService } from "./products.service";
 import { ProductDto } from "./dto/product.dto";
 
@@ -18,15 +18,25 @@ export class ProductsController {
     }
 
     @Get(':id')
-    getProductByID(@Param('id') ProdId: string) {
-        return this.productsService.getProductByID(ProdId);
+    async getProductByID(@Param('id') id: number) {
+        return this.productsService.getProductByID(id);
     }
 
     @Patch(":id")
-    updateProduct(@Param('id') prodID: string, @Body() createProductsDTO: ProductDto){
-        createProductsDTO.id =  prodID;
-        this.productsService.updateProduct(createProductsDTO);
+    async updateProduct(@Param('id') prodID: number, @Body() createProductsDTO: ProductDto) {
+        this.productsService.updateProduct(prodID, createProductsDTO);
         return null;
+    }
+
+    @Delete(":id")
+    async deleteProduct(@Param('id') prodID: number) {
+        const prod = await this.productsService.getProductByID(prodID);
+
+        if (!prod) {
+            throw new NotFoundException("Not found product you searching.")
+        }
+        return this.productsService.deleteProduct(prodID);
+
     }
 
 }
